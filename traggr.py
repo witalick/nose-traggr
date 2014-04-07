@@ -30,6 +30,9 @@ class TRAggr(Plugin):
         config = ConfigParser.ConfigParser()
         config.read(RC_FILE_PATH)
 
+        self._test_id_attr = config.get('traggr', 'test_id_attr') \
+            if config.has_option('traggr', 'test_id_attr') else None
+
         parser.add_option('--traggr-api-url', action='store', dest='traggr_api_url',
                           default=config.get('traggr', 'api_url')
                                   if config.has_option('traggr', 'api_url') else None,
@@ -127,8 +130,15 @@ class TRAggr(Plugin):
         try:
             method = self._get_test_method(test)
 
-            # Get Nose attr "id".
-            return getattr(method, 'id', method.__name__)
+            # Get default test attr "id".
+            default_test_id = \
+                getattr(method, 'id', method.__name__)
+
+            if self._test_id_attr:
+                return getattr(method, self._test_id_attr, default_test_id)
+            else:
+                return default_test_id
+
         except Exception:
             log.warning('Cannot get test id of %s' % method.__name__)
             return ''
