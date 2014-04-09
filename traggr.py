@@ -63,6 +63,9 @@ class TRAggr(Plugin):
                           help='Test attributes, which will be included into each '
                                'test results if a test has such. [default: %default]')
 
+        parser.add_option('--traggr-verbose', action='store_true', dest='traggr_verbose',
+                          default=False)
+
     def configure(self, options, conf):
         super(TRAggr, self).configure(options, conf)
         if not self.enabled:
@@ -84,6 +87,15 @@ class TRAggr(Plugin):
         if not options.traggr_component:
             print('Please specify --traggr-component')
             sys.exit(1)
+
+        if options.traggr_verbose:
+            log.setLevel(logging.DEBUG)
+
+            # formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s', '%Y-%m-%d %H:%M:%S')
+            # log_handler = logging.StreamHandler()
+            # log_handler.setFormatter(formatter)
+
+            # log.addHandler(log_handler)
 
         self._sprint = options.traggr_sprint
         self._component = options.traggr_component
@@ -130,6 +142,11 @@ class TRAggr(Plugin):
         try:
             method = self._get_test_method(test)
 
+        except Exception, e:
+            log.warning('Cannot get test method of test %s. Exception: %s' % (test, e))
+            return ''
+
+        try:
             # Get default test attr "id".
             default_test_id = \
                 getattr(method, 'id', method.__name__)
@@ -139,8 +156,8 @@ class TRAggr(Plugin):
             else:
                 return default_test_id
 
-        except Exception:
-            log.warning('Cannot get test id of %s' % method.__name__)
+        except Exception, e:
+            log.warning('Cannot get test id of method %s. Exception: %s' % (method.__name__, e))
             return ''
 
     def _get_test_attributes(self, test):
