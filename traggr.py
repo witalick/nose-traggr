@@ -91,12 +91,6 @@ class TRAggr(Plugin):
         if options.traggr_verbose:
             log.setLevel(logging.DEBUG)
 
-            # formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s', '%Y-%m-%d %H:%M:%S')
-            # log_handler = logging.StreamHandler()
-            # log_handler.setFormatter(formatter)
-
-            # log.addHandler(log_handler)
-
         self._sprint = options.traggr_sprint
         self._component = options.traggr_component
         self._project = options.traggr_project
@@ -141,7 +135,6 @@ class TRAggr(Plugin):
         """Return a test id if present, else return an empty string."""
         try:
             method = self._get_test_method(test)
-
         except Exception, e:
             log.warning('Cannot get test method of test %s. Exception: %s' % (test, e))
             return ''
@@ -155,7 +148,6 @@ class TRAggr(Plugin):
                 return getattr(method, self._test_id_attr, default_test_id)
             else:
                 return default_test_id
-
         except Exception, e:
             log.warning('Cannot get test id of method %s. Exception: %s' % (method.__name__, e))
             return ''
@@ -165,7 +157,11 @@ class TRAggr(Plugin):
         if not self._test_attrs:
             return
 
-        method = self._get_test_method(test)
+        try:
+            method = self._get_test_method(test)
+        except Exception, e:
+            log.warning('Cannot get test method of test %s. Exception: %s' % (test, e))
+            return None
 
         test_attributes = []
 
@@ -186,7 +182,11 @@ class TRAggr(Plugin):
 
         try:
             method = self._get_test_method(test)
+        except Exception, e:
+            log.warning('Cannot get test method of test %s. Exception: %s' % (test, e))
+            return ''
 
+        try:
             description = method.__doc__
             if not description:
                 return ''
@@ -201,8 +201,6 @@ class TRAggr(Plugin):
                 if num_leading_spaces < min_num_leading_spaces:
                     min_num_leading_spaces = num_leading_spaces
 
-
-
             if min_num_leading_spaces:
 
                 cut_description = []
@@ -212,13 +210,11 @@ class TRAggr(Plugin):
                 description = cut_description
 
             description = '\n'.join(description)
-
             return description
 
-        except Exception:
-            log.warning('Cannot get test description of %s' % method.__name__)
-
-        return ''
+        except Exception, e:
+            log.warning('Cannot get test description of method %s. Exception: %s' % (method.__name__, e))
+            return ''
 
     def _store_result(self, test_id, suite, title, description, result, error=None, test_attrs=None):
 
