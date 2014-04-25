@@ -197,6 +197,8 @@ class TRAggr(Plugin):
             # Cut it a little bit.
             min_num_leading_spaces = sys.maxint
             for line in description:
+                if not line:
+                    continue
                 num_leading_spaces = len(line) - len(line.lstrip(' '))
                 if num_leading_spaces < min_num_leading_spaces:
                     min_num_leading_spaces = num_leading_spaces
