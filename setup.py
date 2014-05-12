@@ -1,7 +1,7 @@
 # from distutils.core import setup
 from setuptools import setup
 
-__version__ = '0.4.2'
+__version__ = '0.4.4'
 
 setup(name='nose-traggr',
       py_modules=['traggr'],

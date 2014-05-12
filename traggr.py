@@ -30,9 +30,6 @@ class TRAggr(Plugin):
         config = ConfigParser.ConfigParser()
         config.read(RC_FILE_PATH)
 
-        self._test_id_attr = config.get('traggr', 'test_id_attr') \
-            if config.has_option('traggr', 'test_id_attr') else None
-
         parser.add_option('--traggr-api-url', action='store', dest='traggr_api_url',
                           default=config.get('traggr', 'api_url')
                                   if config.has_option('traggr', 'api_url') else None,
@@ -62,6 +59,11 @@ class TRAggr(Plugin):
                                   if config.has_option('traggr', 'test_attrs') else None,
                           help='Test attributes, which will be included into each '
                                'test results if a test has such. [default: %default]')
+
+        parser.add_option('--traggr-test-id-attr', action='store', dest='traggr_test_id_attr',
+                          default=config.get('traggr', 'test_id_attr')
+                                  if config.has_option('traggr', 'test_id_attr') else 'id',
+                          help='Test attribute, used as a "test id". [default: %default]')
 
         parser.add_option('--traggr-verbose', action='store_true', dest='traggr_verbose',
                           default=False)
@@ -96,6 +98,7 @@ class TRAggr(Plugin):
         self._project = options.traggr_project
         self._comment = options.traggr_comment
         self._test_attrs = options.traggr_test_attrs
+        self._test_id_attr = options.traggr_test_id_attr
         if self._test_attrs:
             self._test_attrs = [attr.strip() for attr in self._test_attrs.split(',')]
 
@@ -124,8 +127,16 @@ class TRAggr(Plugin):
         """Get a traceback."""
 
         # TODO: Not so good. Check this later.
-        return tb.split('-' * 20 +
-               ' >> begin captured logging')[0].strip().split('\n')[-1]
+        split_traceback = tb.split('-' * 20 +
+               ' >> begin captured logging')[0].strip().split('\n')
+        traceback_index = 0
+        for index, line in enumerate(split_traceback):
+            if line.startswith('    raise'):
+                traceback_index = index + 1
+                break
+
+        traceback_ = split_traceback[traceback_index:]
+        return '\n'.join(traceback_)
 
     def _get_test_method(self, test):
 
@@ -140,14 +151,10 @@ class TRAggr(Plugin):
             return ''
 
         try:
-            # Get default test attr "id".
-            default_test_id = \
-                getattr(method, 'id', method.__name__)
-
-            if self._test_id_attr:
-                return getattr(method, self._test_id_attr, default_test_id)
-            else:
-                return default_test_id
+            # Get test attr "id".
+            test_id = \
+                getattr(method, self._test_id_attr, method.__name__)
+            return test_id
         except Exception, e:
             log.warning('Cannot get test id of method %s. Exception: %s' % (method.__name__, e))
             return ''
