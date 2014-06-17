@@ -227,6 +227,10 @@ class TRAggr(Plugin):
 
     def _store_result(self, test_id, suite, title, description, result, error=None, test_attrs=None):
 
+        # Ignore Nose failure results.
+        if suite in ('suite', 'Failure'):
+            return
+
         result = {'component': self._component,
                   'suite': suite,
                   'test_id': test_id,
